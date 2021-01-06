@@ -6,9 +6,10 @@ from django.conf import settings
 from django.apps import apps
 from django.core.management.base import CommandError
 from django.core.management.commands.runserver import naiveip_re
+from django.utils.module_loading import import_string
+
 from livesync.asyncserver import LiveSyncSocketServer, dispatcher
 from livesync.fswatcher import FileWatcher
-from livesync.core.handler import LiveReloadRequestHandler
 
 
 if 'django.contrib.staticfiles' in settings.INSTALLED_APPS:
@@ -39,6 +40,7 @@ class Command(RunserverCommand):
         settings.DJANGO_LIVESYNC.setdefault('HOST', 'localhost')
         settings.DJANGO_LIVESYNC.setdefault('EXCLUDED_APPS', {'admin', 'debug_toolbar', 'livesync', })
         settings.DJANGO_LIVESYNC.setdefault('INCLUDED_APPS', set(apps.app_configs.keys()) - settings.DJANGO_LIVESYNC['EXCLUDED_APPS'])
+        settings.DJANGO_LIVESYNC.setdefault('EVENT_HANDLER', 'livesync.core.handler.LiveReloadRequestHandler')
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
@@ -76,8 +78,9 @@ class Command(RunserverCommand):
             self.server_process.join()
 
     def _start_watchdog(self):
+        klass = import_string(settings.DJANGO_LIVESYNC['EVENT_HANDLER'])
         self.file_watcher = FileWatcher()
-        self.file_watcher.add_handler(LiveReloadRequestHandler())
+        self.file_watcher.add_handler(klass())
         self.file_watcher.start()
 
     def _stop_watchdog(self):

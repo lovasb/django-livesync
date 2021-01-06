@@ -1,8 +1,16 @@
 import unittest
 from django.conf import settings
 from django.core.management.base import CommandError
+from django.test import override_settings
+
 from livesync.management.commands.runserver import Command
-from mock import patch
+from livesync.core.handler import LiveReloadRequestHandler
+
+
+class MockEventHandler:
+    @property
+    def watched_paths(self):
+        return []
 
 
 class OptionsParserTestcase(unittest.TestCase):
@@ -31,3 +39,14 @@ class OptionsParserTestcase(unittest.TestCase):
 
         with self.assertRaises(CommandError):
             self.command._parse_options(**options)
+
+    def test_default_event_handler(self):
+        self.command._start_watchdog()
+        handler, = self.command.file_watcher.handlers
+        self.assertIsInstance(handler, LiveReloadRequestHandler)
+
+    @override_settings(DJANGO_LIVESYNC={'EVENT_HANDLER': 'livesync.tests.test_command.MockEventHandler'})
+    def test_customize_event_handler(self):
+        self.command._start_watchdog()
+        handler, = self.command.file_watcher.handlers
+        self.assertIsInstance(handler, MockEventHandler)
