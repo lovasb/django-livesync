@@ -1,4 +1,7 @@
+from pathlib import Path
 from unittest import TestCase
+
+from django.test import override_settings
 from mock import patch, Mock, MagicMock
 from django.conf import settings
 
@@ -78,6 +81,7 @@ class BaseEventHandlerTestCase(TestCase):
         # assert
         self.mock_handle.assert_not_called()
 
+
 class LiveReloadEventHandlerTestCase(TestCase):
     def setUp(self):
         self.handler = LiveReloadRequestHandler()
@@ -103,3 +107,10 @@ class LiveReloadEventHandlerTestCase(TestCase):
     def test_handler_combines_template_dirs_and_static_files(self):
         self.assertIn('foo', self.handler.watched_paths)
         self.assertIn('bar', self.handler.watched_paths)
+
+    @override_settings(BASE_DIR=Path('/tmp/'))
+    @patch('livesync.core.handler.get_app_template_dirs')
+    def test_handle_pathlib_path(self, mock_app_template_dirs):
+        mock_app_template_dirs.return_value = [Path('/tmp')]
+        retval = self.handler.watched_paths
+        self.assertTrue(hasattr(retval, '__iter__'))

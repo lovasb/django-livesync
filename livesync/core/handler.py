@@ -1,5 +1,6 @@
 import os
 import itertools
+from pathlib import Path
 
 from django.conf import settings
 from django.apps import apps
@@ -18,12 +19,11 @@ class LiveReloadRequestHandler(BaseEventHandler):
         Returns:
         all static and template locations for all apps included in DJANGO_LIVESYNC.INCLUDED_APPS.
         """
-        tmpls = [
-            os.path.join(d, 'templates') for d in get_app_template_dirs('')
-            if d.startswith(settings.BASE_DIR)
-            and os.path.basename(d) in settings.DJANGO_LIVESYNC['INCLUDED_APPS']
-            and os.path.exists(os.path.join(d, 'templates'))
-        ]
+        tmpls = []
+        for d in get_app_template_dirs(''):
+            d = Path(d)
+            if Path(settings.BASE_DIR) in d.parents and d.name in settings.DJANGO_LIVESYNC['INCLUDED_APPS'] and (d / 'templates').exists():
+                tmpls.append(d / 'templates')
 
         paths = set(itertools.chain(
             getattr(settings, 'STATICFILES_DIRS', []),
@@ -45,5 +45,3 @@ class LiveReloadRequestHandler(BaseEventHandler):
 
     def handle(self, event):
         dispatcher.dispatch('refresh')
-
-

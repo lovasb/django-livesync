@@ -1,4 +1,6 @@
 from unittest import TestCase
+
+from django.test import override_settings
 from mock import Mock, PropertyMock, patch
 from livesync.core.middleware import DjangoLiveSyncMiddleware
 
@@ -11,7 +13,8 @@ class LiveSyncMiddlewareTestCase(TestCase):
         self.mock_content_property = PropertyMock(return_value=b"<body></body>")
         type(self.mocked_response).content = self.mock_content_property
 
-    @patch('livesync.core.middleware.settings.DEBUG', True)
+    @override_settings(DEBUG=True)
+    @override_settings(DJANGO_LIVESYNC={'HOST': '127.0.0.1', 'PORT': '9001'})
     def test_middleware_injects_js_file_correctly(self):
         self.mocked_response.__getitem__ = Mock(return_value='text/html')
         # act
@@ -21,8 +24,8 @@ class LiveSyncMiddlewareTestCase(TestCase):
         self.mock_content_property.assert_called()
         self.assertTrue(b"<script src='/static/livesync.js'></script>" in self.mock_content_property.call_args[0][0])
 
-    @patch('livesync.core.middleware.settings.DEBUG', True)
-    @patch('django.conf.settings.DEBUG', True)
+    @override_settings(DEBUG=False)
+    @override_settings(DJANGO_LIVESYNC={'HOST': '127.0.0.1', 'PORT': '9001'})
     def test_middleware_does_not_inject_js_file_if_content_type_is_not_html(self):
         self.mocked_response.__getitem__ = Mock(return_value='json')
         # act
@@ -30,7 +33,8 @@ class LiveSyncMiddlewareTestCase(TestCase):
         # assert
         self.mock_content_property.assert_not_called()
 
-    @patch('livesync.core.middleware.settings.DEBUG', False)
+    @override_settings(DEBUG=False)
+    @override_settings(DJANGO_LIVESYNC={'HOST': '127.0.0.1', 'PORT': '9001'})
     def test_middleware_does_not_inject_js_file_if_not_debugging(self):
         self.mocked_response.__getitem__ = Mock(return_value='text/html')
         # act
