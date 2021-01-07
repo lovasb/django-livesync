@@ -14,39 +14,39 @@ class MockEventHandler:
 
 
 class OptionsParserTestcase(unittest.TestCase):
-    def setUp(self):
-        self.command = Command()
-
-    def tearDown(self):
-        settings.DJANGO_LIVESYNC = dict()
-
+    @override_settings(DJANGO_LIVESYNC={})
     def test_parse_default_options(self):
+        command = Command()
         options = {'liveport': None, 'addrport': ''}
-        self.command._parse_options(**options)
+        command._parse_options(**options)
 
-        self.assertEqual(self.command.liveport, 9001)
-        self.assertEqual(self.command.livehost, 'localhost')
+        self.assertEqual(command.liveport, 9001)
+        self.assertEqual(command.livehost, 'localhost')
 
     def test_parse_custom_port_and_host(self):
+        command = Command()
         options = {'liveport': 8888, 'addrport': '0.0.0.0:8000'}
-        self.command._parse_options(**options)
+        command._parse_options(**options)
 
-        self.assertEqual(self.command.liveport, 8888)
-        self.assertEqual(self.command.livehost, '0.0.0.0')
+        self.assertEqual(command.liveport, 8888)
+        self.assertEqual(command.livehost, '0.0.0.0')
 
     def test_parse_invalid_port_raises_command_error(self):
+        command = Command()
         options = {'liveport': 'abc', 'addrport': ''}
 
         with self.assertRaises(CommandError):
-            self.command._parse_options(**options)
+            command._parse_options(**options)
 
     def test_default_event_handler(self):
-        self.command._start_watchdog()
-        handler, = self.command.file_watcher.handlers
+        command = Command()
+        command._start_watchdog()
+        handler, = command.file_watcher.handlers
         self.assertIsInstance(handler, LiveReloadRequestHandler)
 
     @override_settings(DJANGO_LIVESYNC={'EVENT_HANDLER': 'livesync.tests.test_command.MockEventHandler'})
     def test_customize_event_handler(self):
-        self.command._start_watchdog()
-        handler, = self.command.file_watcher.handlers
+        command = Command()
+        command._start_watchdog()
+        handler, = command.file_watcher.handlers
         self.assertIsInstance(handler, MockEventHandler)

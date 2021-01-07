@@ -1,0 +1,9 @@
+{% block globals %}
+<script type='text/javascript'>
+    window.DJANGO_LIVESYNC = {'HOST': '{{ LIVESYNC_SETTINGS.HOST }}', 'PORT': '{{ LIVESYNC_SETTINGS.PORT }}'}
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src='/static/livesync.js'></script>
+{% endblock %}

@@ -1,6 +1,7 @@
 import re
 import json
 from django.conf import settings
+from django.template.loader import render_to_string
 
 
 class DjangoLiveSyncMiddleware(object):
@@ -13,18 +14,12 @@ class DjangoLiveSyncMiddleware(object):
 
     @staticmethod
     def process_response(request, response):
-        if settings.DEBUG and 'text/html' in response['Content-Type']:
-            script_settings = """
-                <script type='text/javascript'>
-                    window.DJANGO_LIVESYNC = {{'HOST': '{host}', 'PORT': {port} }}
-                </script>
-            """.format(host=settings.DJANGO_LIVESYNC['HOST'], port=settings.DJANGO_LIVESYNC['PORT']).encode('UTF-8')
+        if settings.DEBUG and 'text/html' in response['Content-Type'] and hasattr(response, 'content'):
+            livesync_settings = getattr(settings, 'DJANGO_LIVESYNC')
+            snippet = render_to_string('livesync/livesync_scripts.html', context={'LIVESYNC_SETTINGS': livesync_settings}).encode('utf-8')
 
-            script_tag = b"""
-                <script src='/static/livesync.js'></script></body>
-            """
-
+            snippet += b'</body>'
             pattern = re.compile(b'</body>', re.IGNORECASE)
-            response.content = pattern.sub(script_settings + script_tag, response.content)
+            response.content = pattern.sub(snippet, response.content)
 
         return response
