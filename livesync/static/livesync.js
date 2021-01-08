@@ -13,7 +13,7 @@ var asyncConnection = new WebSocket(asyncUrl);
 asyncConnection.onmessage = function(evt) {
     var element;
     var evObj = JSON.parse(evt.data);
-    console.log(evObj);
+    // console.log(evObj);
 
     if (!evObj.action) {
         return;
@@ -24,7 +24,12 @@ asyncConnection.onmessage = function(evt) {
         if (!element) { return; }
     }
 
-    eventHandlers[evObj.action](element, evObj.payload);
+    try {
+        eventHandlers[evObj.action](element, evObj.payload);
+    } catch(err) {
+        let cevent = new CustomEvent(evObj.action, {detail: evObj.parameters || {}});
+        document.dispatchEvent(cevent);
+    }
 };
 
 asyncConnection.dispatchAction = function(action, target, payload) {
