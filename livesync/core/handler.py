@@ -6,8 +6,9 @@ from django.conf import settings
 from django.apps import apps
 from django.template.utils import get_app_template_dirs
 
+from livesync.core.event import ClientEvent
+from livesync.core.signals import livesync_event
 from livesync.fswatcher.handlers import BaseEventHandler
-from livesync.asyncserver import dispatcher
 
 
 class LiveReloadRequestHandler(BaseEventHandler):
@@ -44,4 +45,7 @@ class LiveReloadRequestHandler(BaseEventHandler):
         return paths
 
     def handle(self, event):
-        dispatcher.dispatch('refresh')
+        livesync_event.send(sender=self.__class__, event=ClientEvent(
+            action='refresh',
+            parameters={}
+        ))

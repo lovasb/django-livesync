@@ -82,16 +82,17 @@ class BaseEventHandlerTestCase(TestCase):
         self.mock_handle.assert_not_called()
 
 
+
 class LiveReloadEventHandlerTestCase(TestCase):
     def setUp(self):
         self.handler = LiveReloadRequestHandler()
 
-    @patch('livesync.asyncserver.dispatcher.dispatch')
-    def test_handle_dispatches_refresh(self, mock_dispatch):
+    @patch('livesync.core.handler.livesync_event.send')
+    def test_handle_dispatches_event(self, mock_dispatch):
         # act
         self.handler.handle(Mock())
         # assert
-        mock_dispatch.assert_called_with('refresh')
+        mock_dispatch.assert_called()
 
     @patch('livesync.core.middleware.settings.STATICFILES_DIRS',['foo', ])
     def test_handler_watches_staticfiles_dirs(self):

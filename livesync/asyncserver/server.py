@@ -1,8 +1,10 @@
 import sys
 from tornado.web import Application
 from tornado.ioloop import IOLoop
+
+from livesync.core.event import ClientEvent
+from livesync.core.signals import livesync_event
 from .handler import LiveSyncSocketHandler
-from .dispatcher import dispatch
 from socket import error
 import time
 
@@ -33,7 +35,10 @@ class LiveSyncSocketServer(Application):
         except error as err:
             if err.errno == 98:
                 time.sleep(1)
-                dispatch('refresh')
+                livesync_event.send(sender=self.__class__, event=ClientEvent(
+                    action='refresh',
+                    parameters={}
+                ))
                 sys.exit(0)
             else:
                 sys.exit(1)
